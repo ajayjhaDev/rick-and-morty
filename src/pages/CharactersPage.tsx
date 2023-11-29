@@ -34,6 +34,7 @@ const Header = styled.div`
 
   input {
     margin-top: 8px;
+    margin-right: 30px;
   }
 
   select {
@@ -45,7 +46,9 @@ const CharactersPage: React.FC<any> = () => {
   const [characters, setCharacters] = useState<any[]>([]);
   const [filteredCharacters, setFilteredCharacters] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterP, setFilterP] = useState<string>("");
   const [filter, setFilter] = useState<string>("");
+  const [filterVal, setFilterVal] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchCharacters = async () => {
@@ -63,20 +66,46 @@ const CharactersPage: React.FC<any> = () => {
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    applyFilters(term, filter);
+    setFilteredCharacters(
+      filteredCharacters.filter((ele) => ele.name.toLowerCase().includes(term))
+    );
+
+    if (term.length <= 1) {
+      setFilteredCharacters(characters);
+    }
   };
 
   const handleFilterChange = (selectedFilter: string) => {
-    setFilter(selectedFilter);
-    applyFilters(searchTerm, selectedFilter);
+    setFilterP(selectedFilter);
+
+    setFilteredCharacters(characters);
+
+    if (selectedFilter) {
+      setFilterVal(
+        characters.map((ele) => {
+          if (selectedFilter == "location") return ele[selectedFilter].name;
+          return ele[selectedFilter];
+        })
+      );
+    }
   };
 
+  useEffect(() => {
+    if (filter == "") {
+      return setFilteredCharacters(characters);
+    } else {
+      applyFilters(filter, filterP);
+    }
+  }, [filter]);
+
   const applyFilters = (search: string, selectedFilter: string) => {
-    let filtered = characters.filter((char) =>
-      char.name.toLowerCase().includes(search.toLowerCase())
-    );
+    let filtered = [];
 
     let filterValue;
+
+    if (search == "") {
+      return setFilteredCharacters(characters);
+    }
 
     if (selectedFilter) {
       filtered = characters.filter((char) => {
@@ -86,11 +115,10 @@ const CharactersPage: React.FC<any> = () => {
           filterValue = char[selectedFilter];
         }
 
-        console.log(filterValue, selectedFilter);
         return (
           filterValue &&
           typeof filterValue === "string" &&
-          filterValue.toLowerCase().includes(search.toLowerCase())
+          filterValue.toLowerCase() == search.toLowerCase()
         );
       });
     }
@@ -105,20 +133,30 @@ const CharactersPage: React.FC<any> = () => {
         <div>
           <input
             type="text"
-            placeholder="Search by"
+            placeholder="Search by name"
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
           />
 
           <select onChange={(e) => handleFilterChange(e.target.value)}>
             <option value="">Search Filter by</option>
-            <option value="">Name</option>
             <option value="status">Status</option>
             <option value="location">Location</option>
             <option value="gender">Gender</option>
             <option value="species">Species</option>
             <option value="type">Type</option>
           </select>
+
+          {filterVal.length > 1 && filterP != "" && (
+            <select onClick={(e: any) => setFilter(e.target.value)}>
+              <option value="">Select</option>
+              {[...new Set(filterVal)]?.map((ele: string) => (
+                <option key={ele} value={ele}>
+                  {ele}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </Header>
 
